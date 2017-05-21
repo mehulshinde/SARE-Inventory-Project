@@ -1,7 +1,17 @@
+/**
+* SARE project App data handling code
+* @author Mehul Shinde
+* List of executable methods-
+* Execute main : for main master routing logic
+* Execure writeTotalBoxes : for updating number of boxes in CheckIn sheet
+* Execute extractCSV: to update box_data using CSV files on google drive
+*/
 var ss = SpreadsheetApp.getActiveSpreadsheet();
 SpreadsheetApp.setActiveSheet(ss.getSheets()[3]);
 var data= ss.getDataRange().getValues();
+var backup=[[],[]];
 var curR=2;
+var curBox=2;
 var prod, hub, pickDrop, from, at, forBy;
 var truckDue=0;
 var cell;
@@ -110,10 +120,12 @@ function fhm_inputTally()
   //var arr=new Array();
  // arr=wordArray(fhmData[1][2]);
    
- 
+ //if(!(fhmData[1][1].valueOf()))
+ //return -1;
   
  // Finding if the hub is in the list
-  
+  try
+  {
   for(var i=1; i<fhmData.length; i++)
   {
     if(fhmData[i][1]==hub)
@@ -140,6 +152,11 @@ function fhm_inputTally()
       flagProd=1;
       break;
       }
+    }
+    }
+    catch (err)
+    {
+    return -1;
     }
      /**
     
@@ -172,8 +189,11 @@ return " ";
 */
 function writeData()
 {
-//if(fhm_inputTally())// Checks if the producer hub combination exists in fhm_input sheet<*****************UNCOMMENT THIS****************************-
-//{
+if(fhm_inputTally()==-1)// if fhm input is empty or throws a null pointer 
+return;
+
+if(fhm_inputTally())// Checks if the producer hub combination exists in fhm_input sheet<*****************UNCOMMENT THIS****************************-
+{
 SpreadsheetApp.setActiveSheet(ss.getSheets()[4]);//Activate the checkin sheet
 
 
@@ -215,19 +235,21 @@ cell.setValue(prod);
 cell=sheetData.getCell(curR, 7);
 cell.setValue(hub);
 cell=sheetData.getCell(curR, 8);
-cell.setValue("N.A.");
+cell.setValue("NA");
 cell=sheetData.getCell(curR, 9);
 cell.setValue("Yellow");
 cell=sheetData.getCell(curR, 10);
 cell.setValue("FALSE");
 cell=sheetData.getCell(curR, 11);
 cell.setValue("No");
+cell=sheetData.getCell(curR, 12);
+cell.setValue(by+pickDrop+prod+hub);
 
 
 
 
 curR++;
-//}
+}
 
 
 }
@@ -235,7 +257,7 @@ curR++;
 
 function main() {
 
-
+//extractCSV();
 for(var i=1; i<data.length; i++)//for rows
 {
 
@@ -287,7 +309,7 @@ for(var i=1; i<data.length; i++)//for rows
 //      }
       
         
-       if (j==2||j==3||(j-2)%4==0||(j-3)%4==0) // If this is a truck
+       if (/**j==2||*/j==3||/**(j-2)%4==0||*/(j-3)%4==0) // If this is a truck
       {
         
        //   if(truckDue==0)
@@ -333,38 +355,46 @@ for(var i=1; i<data.length; i++)//for rows
          
         
       }
-      else if(j==1||j==4||(j-1)%4==0||j%4==0) //If this is a hub/temp storage
+      else if(/**j==1||*/j==4||/**(j-1)%4==0||*/j%4==0||j==data[i].length-1) //If this is a hub/temp storage
       {
         
-          if(data[i][j].equals(data[i][data[i].length-1])) // if the current hub is the final destination
-          {
-          if(getPrevPos(i,j)!=-1 && getPrevPos(i,j)!=0 && (getPrevPos(i,j)==2||getPrevPos(i,j)==3||(getPrevPos(i,j)-2)%4==0||(getPrevPos(i,j)-3)%4==0 ))
+          //if(data[i][j].equals(data[i][data[i].length-1])) // if the current hub is the final destination
+         // {
+          if(getPrevPos(i,j)!=-1 && getPrevPos(i,j)!=0 && (/**getPrevPos(i,j)==2||*/getPrevPos(i,j)==3||/**(getPrevPos(i,j)-2)%4==0||*/(getPrevPos(i,j)-3)%4==0 ))//If previous is a truck
           {
           pickDrop="Drop";
           forBy=getPrev(i,j);
           at=data[i][j];
           writeData();
-          }
           pickDrop="Receive";
           from=getPrev(i,j);
           forBy=data[i][j];
           truckDue=0;
+          writeData();
+          }
+          else if(getPrevPos(i,j)==2||(getPrevPos(i,j)-2)%4==0)//If the prevous element is a temp truck
+          {
+          pickDrop="Receive";
+          from=getPrev(i,j);
+          forBy=data[i][j];
+          truckDue=0;
+          writeData();
+          }
+          
         
-        writeData();
-        break;
-          }
-         else if(getPrevPos(i,j)!=-1 && getPrevPos(i,j)!=0 && (getPrevPos(i,j)==2||getPrevPos(i,j)==3||(getPrevPos(i,j)-2)%4==0||(getPrevPos(i,j)-3)%4==0 ))// If prev is a turck (For a food hub receiving )
-          {
-          pickDrop="Drop";
-          forBy=getPrev(i,j);
-          at=data[i][j];
-          writeData();
-          forBy=data[i][j];
-          from=getPrev(i,j);
-          pickDrop="Receive";
-          truckDue=0;
-          writeData();
-          }
+          
+//         else if(getPrevPos(i,j)!=-1 && getPrevPos(i,j)!=0 && /**(getPrevPos(i,j)==2||*/getPrevPos(i,j)==3||/**(getPrevPos(i,j)-2)%4==0||*/(getPrevPos(i,j)-3)%4==0 ))// If prev is a turck (For a food hub receiving )
+//          {
+//          pickDrop="Drop";
+//          forBy=getPrev(i,j);
+//          at=data[i][j];
+//          writeData();
+//          forBy=data[i][j];
+//          from=getPrev(i,j);
+//          pickDrop="Receive";
+//          truckDue=0;
+//          writeData();
+//          }
           else if(getPrevPos(i,j)!=-1 &&(getPrevPos(i,j)==0||getPrevPos(i,j)==4||(getPrevPos(i,j)-1)%4==0||getPrevPos(i,j)%4==0|| getPrevPos(i,j)==0))// if previous is producer/hub
           {
           forBy=data[i][j];
@@ -374,6 +404,8 @@ for(var i=1; i<data.length; i++)//for rows
           writeData();
           
           }
+          if(data[i][j].equals(data[i][data[i].length-1]))//If this is a final hub
+          break;
 //          else if(findNextPos(i,j)==2||findNextPos(i,j)==3||(findNextPos(i,j)-2)%4==0||(findNextPos(i,j)-3)%4==0) //If next element is (position has) a truck
 //          {
 //          forBy=findNext(i,j);
@@ -386,6 +418,19 @@ for(var i=1; i<data.length; i++)//for rows
        
        
       }
+      else if(j==1 || (j-1)%4==0)//if this is a temporary storage
+      {
+      if(getPrevPos(i,j)!=-1 && getPrevPos(i,j)!=0 && (/**getPrevPos(i,j)==2||*/getPrevPos(i,j)==3||/**(getPrevPos(i,j)-2)%4==0||*/(getPrevPos(i,j)-3)%4==0 ))
+      {
+       pickDrop="Drop";
+          forBy=getPrev(i,j);
+          at=data[i][j];
+          truckDue=0;
+          writeData();
+      }
+      
+      }
+      
 
   }
   
@@ -394,7 +439,7 @@ for(var i=1; i<data.length; i++)//for rows
 
 
 } 
-curR=2;
+
 
 
 }
@@ -407,21 +452,22 @@ function extractCSV()
   var activeRow=1;
   var activeColumn=1;
   var fileNameArray=new Array("7P","BC","BW","CV","DA","EB","EM","GF","HD","KO","LG","MM","NF","RH","SL","WW","YR","ZZ");
-  SpreadsheetApp.setActiveSheet(ss.getSheets()[0]);//Activate box_data sheet
+  SpreadsheetApp.setActiveSheet(ss.getSheets()[0]);
   var sheet = SpreadsheetApp.getActiveSheet();
   sheet.clear();
   sheet.getRange(activeRow, 1, 1, 1).setValue("Date");
-  sheet.getRange(activeRow, 2, 1, 1).setValue("Producer Name");
-  sheet.getRange(activeRow, 3, 1, 1).setValue("Food Hub Name");
-  sheet.getRange(activeRow, 4, 1, 1).setValue("Number of Boxes");
-                    for(var i=0; i<3; i++)
+  sheet.getRange(activeRow, 2, 1, 1).setValue("Producer");
+  sheet.getRange(activeRow, 3, 1, 1).setValue("Hub");
+  sheet.getRange(activeRow, 4 ,1,1).setValue("Number of boxes");
+                    for(var i=0; i<fileNameArray.length; i++)
                     {
                       try
                       {
-                      var file = DriveApp.getFilesByName(fileNameArray[i]+".csv").next();
+                      var file = DriveApp.getFilesByName(fileNameArray[i]+".CSV").next();
                       }
                       catch(err)//If File doesn't exist
                      {
+                      // System.err.println("File not found");
                      continue;
                      }
                      var csvData = Utilities.parseCsv(file.getBlob().getDataAsString());
@@ -433,6 +479,7 @@ function extractCSV()
                      
  
 }
+
 /**
 * Finds boxes for the producer hub combination
 */
@@ -446,20 +493,30 @@ function totalBoxes(sup, cust)
   var total=new Array();// Array for storing the total boxes from Sheet2
 
 /**
-Copying data from Sheet2 to data2
+Copying data from box_data to data2
 */
+//var ss2 = SpreadsheetApp.getActiveSpreadsheet();
+//SpreadsheetApp.setActiveSheet(ss2.getSheets()[0]);
+//var data2= ss2.getDataRange().getValues();
 
-SpreadsheetApp.setActiveSheet(ss.getSheets()[1]);
-//var sheet=SpreadsheetApp.getActive();
-var data2= ss.getDataRange().getValues();
+
+SpreadsheetApp.setActiveSheet(ss.getSheets()[0]);
+//var data2= ss.getDataRange().getValues();
+var data2 = SpreadsheetApp.getActiveSheet().getRange(1, 1, 100, 10).getValues();
+
   /**
   Copying data2 into 3 separate arrays
   */
-  for(var copy=0;copy<8;copy++)
+  for(var copy=0;copy<data2.length;copy++)
   {
-    supArr[copy]=data2[1+copy][0];
-    custArr[copy]=data2[1+copy][1];
-    total[copy]=data2[1+copy][2];
+    if(data2[copy][1])
+    {
+    supArr[copy]=data2[copy+1][1];
+    custArr[copy]=data2[copy+1][2];
+    total[copy]=data2[copy+1][3];
+    }
+    else
+    break;
   }
   var answer;
   var flag=0;
@@ -467,35 +524,92 @@ var data2= ss.getDataRange().getValues();
 Checking for matches
 */
   
-  for(var i=0; i<8;i++)// Keeps track of suppplier comparisons
+  for(var i=0; i<supArr.length;i++)// Keeps track of suppplier comparisons
   {
-    if(sup==supArr[i])//Checks for match in supplier name
+    if(sup==supArr[i] && cust==custArr[i])//Checks for match in supplier name
     {
-      for(var j=i;j<8;j++)//Loops through customer names
-      {
-        if(custArr[j]==cust&& sup==supArr[i])//Checks for match in customer name
-        {
-          answer=total[j];
-          flag=1;
-          break;
-          
-        }
-      }
+      answer=total[i];
+      flag=1;
+      break;
+
     }
-    if(flag==1)
-    break;
+    
   }
+  if(flag==0)
+  return "NA";
   
   
   return answer;
   
 }
-function nextTest()
+/**
+*
+*/
+function writeTotalBoxes()
 {
-var sheetData=ss.getSheets()[4].getRange(1, 1, 1000, 1000);
-var cell=sheetData.getCell(30, 5);
-cell.setValue(findNextPos(2,0)+"--"+getPrevPos(2,21));
+extractCSV();
+SpreadsheetApp.setActiveSheet(ss.getSheets()[4]);//Activate the checkin sheet
+var sheetData=ss.getSheets()[4].getRange(1, 1, 10000, 1000);
+var cell2;
+var i=2;
+while(1)
+{
+if(sheetData.getCell(i, 6).getValue())
+{
+cell2=sheetData.getCell(i, 8);
+cell2.setValue(totalBoxes(sheetData.getCell(i, 6).getValue(),sheetData.getCell(i, 7).getValue()));
+curBox=i;
+i++;// From column
 }
+else 
+break;
+}
+
+}
+/**
+* Stores all the previous check-in and fhm_inputs 
+*/
+function logSheets()
+{
+var fhm_ss = SpreadsheetApp.getActiveSpreadsheet();
+SpreadsheetApp.setActiveSheet(fhm_ss.getSheets()[2]);
+var fhm_logValues= ss.getDataRange().getValues();
+SpreadsheetApp.setActiveSheet(fhm_ss.getSheets()[4]);
+var checkin_logValues= ss.getDataRange().getValues();
+SpreadsheetApp.setActiveSpreadsheet(SpreadsheetApp.openByUrl("https://docs.google.com/a/iastate.edu/spreadsheets/d/17nXsjfD1wTyGiPj-4SZtWvm5mpC52sbb8VAQmz8vjwI/edit?usp=sharing"));
+var log=SpreadsheetApp.getActiveSpreadsheet();
+//logging fhm data
+SpreadsheetApp.setActiveSheet(log.getSheets()[0]);
+var ts=log.getActiveSheet();
+ts.getRange(ts.getLastRow()+1, 1,fhm_logValues.length,fhm_logValues[0].length).setValues(fhm_logValues); //you will need to define the size of the copied data see getRange()
+SpreadsheetApp.setActiveSheet(log.getSheets()[1]);
+//itterating through checkIn to save changes to backup
+var counter=0;
+var art=[[],[]];
+for(var i=1;i<checkin_logValues.length;i++)
+{
+if(checkin_logValues[i][8]!="Yellow")
+{
+backup[counter][0]=checkin_logValues[i][0];
+backup[counter][1]=checkin_logValues[i][1];
+backup[counter][2]=checkin_logValues[i][2];
+backup[counter][3]=checkin_logValues[i][3];
+backup[counter][4]=checkin_logValues[i][4];
+backup[counter][5]=checkin_logValues[i][5];
+backup[counter][6]=checkin_logValues[i][6];
+backup[counter][7]=checkin_logValues[i][7];
+backup[counter][8]=checkin_logValues[i][8];
+counter++;
+}
+
+}
+//logging checkin data
+ts=log.getActiveSheet();
+ts.getRange(ts.getLastRow()+1, 1,checkin_logValues.length,checkin_logValues[0].length).setValues(checkin_logValues); //you will need to define the size of the copied data see getRange()
+
+
+}
+
 
 
 
