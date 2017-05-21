@@ -1,1 +1,3 @@
 # SARE-Inventory-Project
+This is an application that is part of research of Dr. Caroline Krejci (IMSE Department, Iowa State University) and her team on the SARE Inventory tracking project. The application helps Food Hub Managers, truck drivers and producers to keep track of their products in the process of delivery from producers to the food hub.
+This code mainly handles the back-end of an app created on AppSheet. The purpose of this code is to extract data from .csv files from Google Drive and to use the data along with some predefined .gsheet file data to generate a routing for goods being delivered from producers to food hubs.
