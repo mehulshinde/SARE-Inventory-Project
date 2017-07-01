@@ -6,6 +6,7 @@
 * Execure writeTotalBoxes : for updating number of boxes in CheckIn sheet
 * Execute extractCSV: to update box_data using CSV files on google drive
 * Execute logSheets: to log the current fhm_input and checkIn data
+* Execute statusCheck: to check and store any status chenge in any of the entries 
 */
 var ss = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1svBNo3pPurUPaASgPlSfpV7iMWPvfU4HWNUpGblo_WA/edit?usp=sharing");//Stores the checkIn spreadsheet
 var bss= SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1svMKc7p-T54V1v41gVeH8RAyzW_Z2rvgUQfk02l2c3Y/edit?usp=sharing");// Store backup sheet
@@ -205,7 +206,7 @@ function fhm_inputTally()
 }
 /**
 * Gets the address of elements in 'At' column
-* @param {} 
+* @param {choice is 'a' when looking for address and 'e' whe looking for email} 
 * @returns {String} address
 */
 function getAddress(choice)
@@ -215,12 +216,12 @@ SpreadsheetApp.setActiveSheet(ss.getSheets()[1]);
 var addressArr= SpreadsheetApp.getActiveSpreadsheet().getDataRange().getValues();
 for(var i=1; i<addressArr.length; i++)
 {
-if(at && at.equals(addressArr[i][0])){
-if(choice== 'a')//if asking for address
+if(at && at.equals(addressArr[i][0]) && choice== 'a')//if looking fo raddress and at column is not empty and at matches the address we're looking for
 return addressArr[i][2];
-else
+if(prod && prod.equals(addressArr[i][0]) && choice== 'e')//if looking for email
 return addressArr[i][3];
-}
+
+
 }
 return " ";
 }
@@ -357,6 +358,7 @@ cell=sheetData.getCell(curR, 12);
 cell.setValue(checkedIn);
 cell=sheetData.getCell(curR, 13);
 cell.setValue(comments);
+comments=" ";
 cell=sheetData.getCell(curR, 14);
 cell.setValue(image);
 cell=sheetData.getCell(curR, 15);
@@ -380,9 +382,18 @@ curR++;
 function writeRemainingBackupData()
 {
 Logger.log("Backup_sheet %s",backup_sheet);
+try
+{
 if(!backup_sheet[0][0])
 {
+backup_sheet=new Array([]);
 Logger.log("Back up Empty");
+return;
+}
+}
+catch(e)
+{
+backup_sheet=new Array([]);
 return;
 }
 for(var x1=0; x1<backup_sheet.length; x1++)
@@ -412,6 +423,10 @@ writeData2();
 }
 }
 backup_sheet=new Array([]);
+SpreadsheetApp.setActiveSpreadsheet(bss);
+SpreadsheetApp.setActiveSheet(bss.getSheets()[2]);
+bss.getSheets()[2].clear();
+
 }
 
 /**
@@ -525,9 +540,11 @@ sheet.getRange(1, 2, 1, 1).setValue("Producer");
 sheet.getRange(1, 3, 1, 1).setValue("Hub");
 sheet.getRange(1, 4 ,1,1).setValue("Number of boxes");
 
-
-
-
+SpreadsheetApp.setActiveSheet(ss.getSheets()[2]);
+sheet=SpreadsheetApp.getActiveSheet();
+sheet.getRange(1, 1, 1, 1).setValue("Last Modified");
+sheet.getRange(1, 2, 1, 1).setValue("Food Hub");
+sheet.getRange(1, 3, 1, 1).setValue("Check the producers");
 }
 /**
 * collects check in data based on the Master routing
