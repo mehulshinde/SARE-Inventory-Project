@@ -317,6 +317,7 @@ SpreadsheetApp.setActiveSheet(ss.getSheets()[4]);//Activate the checkin sheet
 var sheetData=ss.getSheets()[4].getRange(1, 1, 1000, 1000);
 if(pickDrop.equals("Receive"))
 {
+address=" ";
 cell=sheetData.getCell(curR, 1);
 if(from.toString().indexOf("Arrival")>-1)
 cell.setValue(from);
@@ -477,7 +478,6 @@ catch(err)
 }
 /**
 *
-
 Writes column headers for checkin sheet
 */
 function writeCheckInHeaders()
@@ -927,9 +927,3 @@ function timerFunction() {
   var currentTime = d.toLocaleTimeString(); // "12:35 PM", for instance
   Logger.log("cheching timer function %s", currentTime);
 }
-
-
-
-
-
-
